@@ -145,7 +145,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold text-gray-900">AI Chatbot</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Chat freely - I&apos;ll learn and remember our conversations
+            Chat freely - I{'\''}ll learn and remember our conversations
           </p>
         </div>
       </header>
@@ -173,7 +173,7 @@ export default function Home() {
                 Start a conversation
               </h2>
               <p className="text-gray-600 mb-4">
-                Ask me anything, or try asking &quot;Who am I?&quot; after we&apos;ve chatted a bit!
+                Ask me anything, or try asking {'"'}Who am I?{'"'} after we{'\''}ve chatted a bit!
               </p>
             </div>
           )}

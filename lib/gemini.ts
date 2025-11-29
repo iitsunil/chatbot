@@ -1,10 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Message } from "./db";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-
-if (!process.env.GOOGLE_API_KEY) {
-  throw new Error("Missing GOOGLE_API_KEY environment variable");
+function getGenAI() {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing GOOGLE_API_KEY environment variable");
+  }
+  return new GoogleGenerativeAI(apiKey);
 }
 
 // Generate chat response using Gemini
@@ -33,6 +35,7 @@ export async function generateChatResponse(
   }
 
   try {
+    const genAI = getGenAI();
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
     });
@@ -42,7 +45,19 @@ export async function generateChatResponse(
     return response.text() || "Sorry, I could not generate a response.";
   } catch (error) {
     console.error("Gemini API error:", error);
-    throw new Error("Failed to generate chat response");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (errorMessage.includes("model") || errorMessage.includes("not found")) {
+      throw new Error(
+        `Invalid Gemini model. Please check your model name. Error: ${errorMessage}`
+      );
+    }
+    if (
+      errorMessage.includes("API key") ||
+      errorMessage.includes("authentication")
+    ) {
+      throw new Error("Invalid or missing Google Gemini API key");
+    }
+    throw new Error(`Failed to generate chat response: ${errorMessage}`);
   }
 }
 
@@ -74,6 +89,7 @@ export async function generatePersonalityProfile(
   Create a personality profile:`;
 
   try {
+    const genAI = getGenAI();
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
     });
