@@ -1,12 +1,16 @@
 import OpenAI from "openai";
 import { Message } from "./db";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai: OpenAI | null = null;
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("Missing OPENAI_API_KEY environment variable");
+function getClient(): OpenAI {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY not configured");
+  }
+  if (!openai) {
+    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openai;
 }
 
 // Generate chat response
@@ -28,7 +32,8 @@ export async function generateChatResponse(
   };
 
   try {
-    const completion = await openai.chat.completions.create({
+    const client = getClient();
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [systemMessage, ...conversationMessages, ...messages],
       temperature: 0.7,
@@ -73,7 +78,8 @@ export async function generatePersonalityProfile(
   Create a personality profile:`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const client = getClient();
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {

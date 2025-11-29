@@ -61,12 +61,14 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# Google Gemini Configuration
-GOOGLE_API_KEY=your_google_gemini_api_key
+# Groq AI Configuration (FREE - Get key from https://console.groq.com/)
+GROQ_API_KEY=your_groq_api_key
 
 # Application Configuration (optional, defaults to localhost:3000)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+**Note:** We use Groq (100% FREE) instead of paid services like OpenAI or Google Gemini. Get your free API key at https://console.groq.com/
 
 ### 5. Run the development server
 

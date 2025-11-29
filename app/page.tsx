@@ -1,147 +1,157 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useRef } from 'react'
-import ChatMessage from '@/components/ChatMessage'
-import ChatInput from '@/components/ChatInput'
-import { Message } from '@/lib/db'
+import { useState, useEffect, useRef } from "react";
+import ChatMessage from "@/components/ChatMessage";
+import ChatInput from "@/components/ChatInput";
+import { Message } from "@/lib/db";
 
-const USER_ID = 'default-user' // In a real app, this would come from auth
+const USER_ID = "default-user"; // In a real app, this would come from auth
 
 // Constants to avoid ESLint unescaped entities warnings
-const APOSTROPHE = "'"
-const QUOTE = '"'
+const APOSTROPHE = "'";
+const QUOTE = '"';
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = async (content: string) => {
-    if (!content.trim() || isLoading) return
+    if (!content.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: `temp-${Date.now()}`,
-      conversation_id: '',
-      role: 'user',
+      conversation_id: "",
+      role: "user",
       content: content.trim(),
       created_at: new Date().toISOString(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
+      const response = await fetch("/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: USER_ID,
           message: content.trim(),
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.details || errorData.error || "Failed to send message"
+        );
       }
 
-      const data = await response.json()
-      
+      const data = await response.json();
+
       const assistantMessage: Message = {
         id: data.messageId || `assistant-${Date.now()}`,
-        conversation_id: data.conversationId || '',
-        role: 'assistant',
+        conversation_id: data.conversationId || "",
+        role: "assistant",
         content: data.response,
         created_at: new Date().toISOString(),
-      }
+      };
 
-      setMessages((prev) => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error("Error sending message:", error);
+      const errorDetails =
+        error instanceof Error ? error.message : String(error);
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
-        conversation_id: '',
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        conversation_id: "",
+        role: "assistant",
+        content: `Sorry, something went wrong. Please try again in a moment.`,
         created_at: new Date().toISOString(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleProfileRequest = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await fetch('/api/profile', {
-        method: 'POST',
+      const response = await fetch("/api/profile", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: USER_ID,
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to get profile')
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.details || errorData.error || "Failed to get profile"
+        );
       }
 
-      const data = await response.json()
-      
+      const data = await response.json();
+
       const profileMessage: Message = {
         id: `profile-${Date.now()}`,
-        conversation_id: '',
-        role: 'assistant',
+        conversation_id: "",
+        role: "assistant",
         content: data.profile,
         created_at: new Date().toISOString(),
-      }
+      };
 
-      setMessages((prev) => [...prev, profileMessage])
+      setMessages((prev) => [...prev, profileMessage]);
     } catch (error) {
-      console.error('Error getting profile:', error)
+      console.error("Error getting profile:", error);
+      const errorDetails =
+        error instanceof Error ? error.message : String(error);
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
-        conversation_id: '',
-        role: 'assistant',
-        content: 'Sorry, I encountered an error generating your profile. Please try again.',
+        conversation_id: "",
+        role: "assistant",
+        content: `Sorry, I couldn't build your profile right now. Please try again later.`,
         created_at: new Date().toISOString(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Check if message is a profile request
   const isProfileRequest = (message: string): boolean => {
-    const lowerMessage = message.toLowerCase()
+    const lowerMessage = message.toLowerCase();
     return (
-      lowerMessage.includes('who am i') ||
-      lowerMessage.includes('tell me about myself') ||
-      lowerMessage.includes('what do you know about me') ||
-      lowerMessage.includes('my profile') ||
-      lowerMessage.includes('describe me')
-    )
-  }
+      lowerMessage.includes("who am i") ||
+      lowerMessage.includes("tell me about myself") ||
+      lowerMessage.includes("what do you know about me") ||
+      lowerMessage.includes("my profile") ||
+      lowerMessage.includes("describe me")
+    );
+  };
 
   const handleMessageSubmit = async (content: string) => {
     if (isProfileRequest(content)) {
-      await handleProfileRequest()
+      await handleProfileRequest();
     } else {
-      await handleSendMessage(content)
+      await handleSendMessage(content);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -177,7 +187,8 @@ export default function Home() {
                 Start a conversation
               </h2>
               <p className="text-gray-600 mb-4">
-                Ask me anything, or try asking {QUOTE}Who am I?{QUOTE} after we{APOSTROPHE}ve chatted a bit!
+                Ask me anything, or try asking {QUOTE}Who am I?{QUOTE} after we
+                {APOSTROPHE}ve chatted a bit!
               </p>
             </div>
           )}
@@ -203,6 +214,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

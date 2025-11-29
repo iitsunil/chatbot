@@ -4,7 +4,7 @@ import {
   saveMessage,
   getConversationHistory,
 } from "@/lib/db";
-import { generateChatResponse } from "@/lib/gemini";
+import { generateChatResponseFallback } from "@/lib/aiFallback";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     // Save user message
     const userMessage = await saveMessage(conversationId, "user", message);
 
-    // Generate AI response
-    const response = await generateChatResponse(
+    // Generate AI response with fallback (Groq -> Gemini -> OpenAI)
+    const response = await generateChatResponseFallback(
       [{ role: "user", content: message }],
       history
     );
@@ -46,8 +46,19 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Chat API error:", error);
+    const raw = error instanceof Error ? error.message : String(error);
+
+    // Map raw error to user-safe message
+    let publicMessage = "Something went wrong. Please try again shortly.";
+    if (/rate|quota|limit/i.test(raw)) publicMessage = "Rate limit reached. Please wait and retry.";
+    if (/timeout|network/i.test(raw)) publicMessage = "Network issue. Please retry.";
+    if (/invalid api key|auth|unauthorized/i.test(raw)) publicMessage = "Authentication error. Check configuration.";
+
+    // Always log full details server-side, but never expose them to client except in dev optionally via debug flag.
+    const debug = process.env.NODE_ENV === "development" ? { debug: raw } : {};
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: publicMessage, ...debug },
       { status: 500 }
     );
   }

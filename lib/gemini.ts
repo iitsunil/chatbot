@@ -36,24 +36,33 @@ export async function generateChatResponse(
 
   try {
     const genAI = getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
 
+    // Use gemini-2.0-flash-exp (Flash 2.5) - free and powerful
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    return response.text() || "Sorry, I could not generate a response.";
+    const text = response.text();
+
+    if (text) {
+      console.log(
+        `✅ Successfully generated response with gemini-2.0-flash-exp`
+      );
+      return text;
+    }
+
+    throw new Error("No response text generated");
   } catch (error) {
     console.error("Gemini API error:", error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (errorMessage.includes("model") || errorMessage.includes("not found")) {
       throw new Error(
-        `Invalid Gemini model. Please check your model name. Error: ${errorMessage}`
+        `Invalid Gemini model. Please check your API key has access to Gemini models. Error: ${errorMessage}`
       );
     }
     if (
       errorMessage.includes("API key") ||
-      errorMessage.includes("authentication")
+      errorMessage.includes("authentication") ||
+      errorMessage.includes("403")
     ) {
       throw new Error("Invalid or missing Google Gemini API key");
     }
@@ -90,16 +99,24 @@ export async function generatePersonalityProfile(
 
   try {
     const genAI = getGenAI();
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
 
+    // Use gemini-2.0-flash-exp (Flash 2.5) - free and powerful
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
     const result = await model.generateContent(prompt);
-
     const response = await result.response;
-    return response.text() || "Unable to generate profile at this time.";
+    const text = response.text();
+
+    if (text) {
+      console.log(
+        `✅ Successfully generated profile with gemini-2.0-flash-exp`
+      );
+      return text;
+    }
+
+    throw new Error("No response text generated");
   } catch (error) {
     console.error("Gemini API error:", error);
-    throw new Error("Failed to generate personality profile");
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to generate personality profile: ${errorMessage}`);
   }
 }
